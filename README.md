@@ -45,7 +45,6 @@ Uma interface web moderna e intuitiva para conversar com a Inteligência Artific
 
 ```
 chat_AI.html          # Arquivo principal da aplicação
-chat_AI1.html         # Versão alternativa (backup)
 manifest.json         # Manifesto PWA
 service-worker.js     # Service Worker para PWA
 ```
