@@ -1,4 +1,4 @@
-const CACHE_NAME = "chat-ai-cache-v2";
+const CACHE_NAME = "chat-ai-cache-v3";
 
 const urlsToCache = [
   "./",
@@ -12,35 +12,35 @@ const urlsToCache = [
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// ATIVAÇÃO
+// ATIVAÇÃO: apaga caches antigos
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then(names => Promise.all(names.map(n => (n !== CACHE_NAME ? caches.delete(n) : null))))
+      .then(() => self.clients.claim())
   );
 });
 
-// FETCH (offline)
+// FETCH: rede primeiro (sempre pega a versão nova do app); cache só como reserva offline.
+// Chamadas à API do Gemini (POST) e recursos de outros domínios não passam pelo cache.
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
+  const req = event.request;
+  if (req.method !== "GET") return;
+  if (new URL(req.url).origin !== self.location.origin) return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
+    fetch(req)
+      .then(res => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        }
+        return res;
       })
+      .catch(() => caches.match(req).then(r => r || caches.match("./index.html")))
   );
 });
