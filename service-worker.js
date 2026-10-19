@@ -1,4 +1,4 @@
-const CACHE_NAME = "chat-ai-cache-v3";
+const CACHE_NAME = "chat-ai-cache-v7";
 
 const urlsToCache = [
   "./",
